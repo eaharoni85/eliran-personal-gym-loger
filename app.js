@@ -563,22 +563,22 @@ function createSetForm(exercise, set, index) {
   if (metricType === "cardio") {
     form.innerHTML = `
       <span class="set-index">1</span>
-      <input name="distanceKm" type="number" min="0" step="0.01" placeholder="km" aria-label="${exercise.name} distance km" value="${distanceValue}">
-      <input name="calories" type="number" min="0" step="1" placeholder="cal" aria-label="${exercise.name} calories" value="${caloriesValue}">
-      <input name="minutes" type="number" min="0" step="0.5" placeholder="min" aria-label="${exercise.name} minutes" value="${minutesValue}">
+      <input name="distanceKm" type="number" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" min="0" step="0.01" placeholder="km" aria-label="${exercise.name} distance km" value="${distanceValue}">
+      <input name="calories" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="1" placeholder="cal" aria-label="${exercise.name} calories" value="${caloriesValue}">
+      <input name="minutes" type="number" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" min="0" step="0.5" placeholder="min" aria-label="${exercise.name} minutes" value="${minutesValue}">
       <button type="submit" class="primary-button">${set ? "Update" : "Done"}</button>
     `;
   } else if (metricType === "reps") {
     form.innerHTML = `
       <span class="set-index">${index + 1}</span>
-      <input name="reps" type="number" min="1" step="1" placeholder="${exercise.targetReps || "reps"}" aria-label="Set ${index + 1} reps" value="${repsValue}">
+      <input name="reps" type="number" inputmode="numeric" pattern="[0-9]*" min="1" step="1" placeholder="${exercise.targetReps || "reps"}" aria-label="Set ${index + 1} reps" value="${repsValue}">
       <button type="submit" class="primary-button">${set ? "Update" : "Done"}</button>
     `;
   } else {
     form.innerHTML = `
       <span class="set-index">${index + 1}</span>
-      <input name="weight" type="number" min="0" step="0.5" placeholder="${exercise.targetWeight || "kg"}" aria-label="Set ${index + 1} weight" value="${weightValue}">
-      <input name="reps" type="number" min="1" step="1" placeholder="${exercise.targetReps || "reps"}" aria-label="Set ${index + 1} reps" value="${repsValue}">
+      <input name="weight" type="number" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" min="0" step="0.5" placeholder="${exercise.targetWeight || "kg"}" aria-label="Set ${index + 1} weight" value="${weightValue}">
+      <input name="reps" type="number" inputmode="numeric" pattern="[0-9]*" min="1" step="1" placeholder="${exercise.targetReps || "reps"}" aria-label="Set ${index + 1} reps" value="${repsValue}">
       <button type="submit" class="primary-button">${set ? "Update" : "Done"}</button>
     `;
   }

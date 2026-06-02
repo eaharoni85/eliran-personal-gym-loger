@@ -63,6 +63,7 @@ let timer = {
 
 let workoutTimerIntervalId = null;
 let audioContext;
+let audioPrimed = false;
 
 const els = {
   sessionDate: document.querySelector("#sessionDate"),
@@ -600,7 +601,15 @@ function createSetForm(exercise, set, index) {
     if (isWorkoutComplete()) {
       completeWorkoutTimer();
     }
-    startTimer(state.defaultRest, `${exercise.name} set ${index + 1}`);
+    if (metricType === "cardio") {
+      stopTimer();
+      timer.total = state.defaultRest;
+      timer.remaining = state.defaultRest;
+      timer.exerciseName = "";
+      renderTimer();
+    } else {
+      startTimer(state.defaultRest, `${exercise.name} set ${index + 1}`);
+    }
     saveState();
     renderPreservingScroll();
   });
@@ -1376,6 +1385,16 @@ function primeAudio() {
   if (audioContext.state === "suspended") {
     audioContext.resume().catch(() => {});
   }
+  if (!audioPrimed) {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.03);
+    audioPrimed = true;
+  }
 }
 
 function playTimerTone() {
@@ -1524,6 +1543,7 @@ els.newWorkoutBtn.addEventListener("click", () => startNewWorkout());
 els.finishWorkoutBtn.addEventListener("click", finishWorkout);
 
 els.workoutTimerToggleBtn.addEventListener("click", () => {
+  primeAudio();
   if (state.workoutTimer?.running) {
     stopWorkoutTimer();
   } else {

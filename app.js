@@ -8,27 +8,32 @@ const WORKOUT_PLANS = {
     name: "Workout A",
     description: "חזה / כתפיים / יד אחורית",
     exercises: [
-      { group: "Chest", name: "Chest Press", machine: "29", targetSets: 3, targetReps: "10-12", targetWeight: 42.5, videoUrl: "https://www.youtube.com/watch?v=-YQIY1lRLwk&list=PLY8NJup9wFyR_CLTyhVg7EQkoZZOfZWsI&index=2" },
-      { group: "Chest", name: "Chest Fly", machine: "35", aliases: ["Fly's"], targetSets: 3, targetReps: "10-12", targetWeight: 45, videoUrl: "https://www.youtube.com/watch?v=v-kQe1jErFA&list=PLY8NJup9wFyR_CLTyhVg7EQkoZZOfZWsI&index=4" },
-      { group: "Chest", name: "Up Chest Press", machine: "7", targetSets: 3, targetReps: "10-12", targetWeight: 7.5, videoUrl: "https://www.youtube.com/watch?v=UquzzGY3i0E&list=PLY8NJup9wFyQgeSPVANd5QJxWvIXuIzP9&index=1" },
-      { group: "Shoulders", name: "Shoulder Press", machine: "30", targetSets: 3, targetReps: "10-12", targetWeight: 27.5, videoUrl: "https://www.youtube.com/watch?v=Y2gX30susJk&list=PLY8NJup9wFyQgeSPVANd5QJxWvIXuIzP9&index=2" },
-      { group: "Shoulders", name: "Lateral Raises", targetSets: 3, targetReps: "10-12", targetWeight: 5, videoUrl: "" },
-      { group: "Triceps", name: "Triceps Extension - Cable", targetSets: 3, targetReps: "10-12", targetWeight: null, videoUrl: "https://www.youtube.com/watch?v=R0gv5UwUX94&list=PLY8NJup9wFySqj27KtLPPORQr8fWc0tiD&index=2" },
-      { group: "Triceps", name: "Triceps Extension", targetSets: 3, targetReps: "10-12", targetWeight: 15, videoUrl: "https://www.youtube.com/watch?v=R0gv5UwUX94&list=PLY8NJup9wFySqj27KtLPPORQr8fWc0tiD&index=2" }
+      { group: "Cardio", name: "Bike", metricType: "cardio", targetSets: 1, targetReps: "", targetWeight: null, comment: "מהירות 5 - אינטרוול 4-3" },
+      { group: "Chest", name: "Chest Press", machine: "29", targetSets: 3, targetReps: "10-12", targetWeight: 42.5, comment: "מכונה 29" },
+      { group: "Chest", name: "Chest Fly", machine: "35", targetSets: 3, targetReps: "10-12", targetWeight: 45, comment: "מכונה 35" },
+      { group: "Chest", name: "Up Chest Press", machine: "7", targetSets: 3, targetReps: "10-12", targetWeight: 7.5, comment: "מכונה 7" },
+      { group: "Shoulders", name: "Shoulder Press", machine: "30", targetSets: 3, targetReps: "10-12", targetWeight: 27.5, comment: "מכונה 30" },
+      { group: "Shoulders", name: "Lateral Raises - הרחקת כתפיים", targetSets: 3, targetReps: "10-12", targetWeight: 5, comment: "משקולות חופשי" },
+      { group: "Triceps", name: "Triceps Extension - W", targetSets: 3, targetReps: "10-12", targetWeight: null, comment: "לחציה צרפתית - כנגד מוט - 2 תרגילים" },
+      { group: "Triceps", name: "Triceps Extension", targetSets: 3, targetReps: "10-12", targetWeight: 15, comment: "כנגד כבל - מוט ישר" },
+      { group: "Custom", name: "תרגיל בטן", metricType: "reps", targetSets: 3, targetReps: "10-12", targetWeight: null, comment: "Custom - 3 sets - 10-12 reps - 01:30 rest - 0/3 done" }
     ]
   },
   b: {
     name: "Workout B",
     description: "גב / כתפיים / יד קדמית / רגלים",
     exercises: [
-      { group: "Back", name: "Lat Pull Down - Wide", machine: "21", targetSets: 3, targetReps: "10-12", targetWeight: 50, videoUrl: "https://www.youtube.com/watch?v=ROD4iSEmBn4&list=PLY8NJup9wFyRaeDJWCbkhde3azvUlQ7cg&index=2" },
-      { group: "Back", name: "Lat Pull Down - Narrow", machine: "21", targetSets: 3, targetReps: "10-12", targetWeight: 42.5, videoUrl: "https://www.youtube.com/watch?v=ROD4iSEmBn4&list=PLY8NJup9wFyRaeDJWCbkhde3azvUlQ7cg&index=2" },
-      { group: "Back", name: "Row", targetSets: 3, targetReps: "10-12", targetWeight: 50, videoUrl: "https://www.youtube.com/watch?v=hamf1OplhfQ&list=PLY8NJup9wFyRaeDJWCbkhde3azvUlQ7cg&index=4" },
-      { group: "Shoulders", name: "Back Raise", machine: "35", targetSets: 3, targetReps: "10-12", targetWeight: 30, videoUrl: "https://www.youtube.com/watch?v=TCnDrS0NUtg&list=PLY8NJup9wFyQgeSPVANd5QJxWvIXuIzP9&index=3" },
-      { group: "Biceps", name: "Biceps Curls", machine: "16", targetSets: 3, targetReps: "10-12", targetWeight: 12.5, videoUrl: "https://www.youtube.com/watch?v=DS0v-Re93Go&list=PLY8NJup9wFySqj27KtLPPORQr8fWc0tiD&index=3" },
-      { group: "Biceps", name: "Biceps Curls - Dumbbells", targetSets: 3, targetReps: "10-12", targetWeight: 9, videoUrl: "https://www.youtube.com/watch?v=DS0v-Re93Go&list=PLY8NJup9wFySqj27KtLPPORQr8fWc0tiD&index=3" },
-      { group: "Legs", name: "Leg Extension", machine: "23", targetSets: 3, targetReps: "10-12", targetWeight: 30, videoUrl: "https://www.youtube.com/watch?v=qtNpjf0yisU&list=PLY8NJup9wFyRBzAsLBWM8j0_y7ag3eg7E&index=9" },
-      { group: "Legs", name: "Leg Curls", machine: "24", targetSets: 3, targetReps: "10-12", targetWeight: 40, videoUrl: "https://www.youtube.com/watch?v=XRUmhDukcXc&list=PLY8NJup9wFyRBzAsLBWM8j0_y7ag3eg7E&index=8" }
+      { group: "Cardio", name: "Bike", metricType: "cardio", targetSets: 1, targetReps: "", targetWeight: null, comment: "מהירות 5 - אינטרוול 4-3" },
+      { group: "Back", name: "PullDown - Wide", machine: "21", targetSets: 3, targetReps: "10-12", targetWeight: 50, comment: "מוט רחב מעוגל" },
+      { group: "Back", name: "PullDown - Narrow", machine: "21", targetSets: 3, targetReps: "10-12", targetWeight: 42.5, comment: "מוט צר - כמו של ROW" },
+      { group: "Back", name: "Row", targetSets: 3, targetReps: "10-12", targetWeight: 50, comment: "מוט צר" },
+      { group: "Shoulders", name: "Back Fly", machine: "35", targetSets: 3, targetReps: "10-12", targetWeight: 30, comment: "פרפר אחורי" },
+      { group: "Biceps", name: "Biceps Curls", machine: "16", targetSets: 3, targetReps: "10-12", targetWeight: 12.5, comment: "כנגד כבל -משקולת למטה - מוט ישר" },
+      { group: "Biceps", name: "Biceps Curls - Dumbbells", targetSets: 3, targetReps: "10-12", targetWeight: 9, comment: "פטישים - משוקלת חופשית" },
+      { group: "Biceps", name: "Biceps Curls - EZ Bar Preacher Curl", targetSets: 3, targetReps: "10-12", targetWeight: null, comment: "ספסל + מוט" },
+      { group: "Legs", name: "Leg Extension", machine: "23", targetSets: 3, targetReps: "10-12", targetWeight: 30, comment: "מכונה 23" },
+      { group: "Legs", name: "Leg Curls", machine: "24", targetSets: 3, targetReps: "10-12", targetWeight: 40, comment: "מכונה 24" },
+      { group: "Core", name: "תרגיל בטן", metricType: "reps", targetSets: 3, targetReps: "10-12", targetWeight: null, comment: "Core - 3 sets - 10-12 reps - 01:30 rest - 0/3 done" }
     ]
   }
 };
@@ -108,14 +113,18 @@ const els = {
 };
 
 function createPlanExercises(planId, restSeconds = DEFAULT_REST_SECONDS) {
-  return WORKOUT_PLANS[planId].exercises.map((exercise) => ({
-    id: makeId(),
-    ...exercise,
-    rest: restSeconds,
-    comment: buildExerciseComment({ ...exercise, rest: restSeconds }, 0),
-    collapsed: false,
-    sets: createEmptySets()
-  }));
+  return WORKOUT_PLANS[planId].exercises.map((exercise) => {
+    const targetSets = getExerciseSetCount(exercise);
+    return {
+      id: makeId(),
+      ...exercise,
+      targetSets,
+      rest: restSeconds,
+      comment: exercise.comment || buildExerciseComment({ ...exercise, rest: restSeconds }, 0),
+      collapsed: false,
+      sets: createEmptySets(targetSets)
+    };
+  });
 }
 
 function createPlanTemplates(restSeconds = DEFAULT_REST_SECONDS) {
@@ -130,14 +139,15 @@ function createPlanTemplates(restSeconds = DEFAULT_REST_SECONDS) {
 function createPlanTemplateFromExercises(exercises, restSeconds = DEFAULT_REST_SECONDS) {
   return (exercises || []).map((exercise) => {
     const rest = Number(exercise.rest) || restSeconds;
+    const targetSets = getExerciseSetCount(exercise);
     return {
       ...exercise,
       id: exercise.id || makeId(),
-      targetSets: SETS_PER_EXERCISE,
+      targetSets,
       rest,
       comment: exercise.comment || buildExerciseComment({ ...exercise, rest }, 0),
       collapsed: false,
-      sets: createEmptySets()
+      sets: createEmptySets(targetSets)
     };
   });
 }
@@ -148,11 +158,11 @@ function createExercisesFromTemplate(planId, restSeconds = DEFAULT_REST_SECONDS)
     : createPlanExercises(planId, restSeconds);
 
   return createPlanTemplateFromExercises(template, restSeconds)
-    .map((exercise) => normalizeExercise({ ...exercise, sets: createEmptySets(), collapsed: false }, planId, restSeconds));
+    .map((exercise) => normalizeExercise({ ...exercise, sets: createEmptySets(getExerciseSetCount(exercise)), collapsed: false }, planId, restSeconds));
 }
 
-function createEmptySets() {
-  return Array.from({ length: SETS_PER_EXERCISE }, () => null);
+function createEmptySets(count = SETS_PER_EXERCISE) {
+  return Array.from({ length: count }, () => null);
 }
 
 function makeId() {
@@ -227,13 +237,14 @@ function normalizeExercise(exercise, planId = "a", defaultRest = DEFAULT_REST_SE
     merged.name = "Chest Fly";
   }
   const rest = Number(merged.rest) || defaultRest;
-  const sets = normalizeSets(exercise.sets, rest);
+  const targetSets = getExerciseSetCount(merged);
+  const sets = normalizeSets(exercise.sets, rest, targetSets);
 
   return {
     rest,
     sets,
     ...merged,
-    targetSets: SETS_PER_EXERCISE,
+    targetSets,
     comment: merged.comment || buildExerciseComment({ ...merged, rest }, sets.filter(Boolean).length),
     collapsed: Boolean(merged.collapsed),
     rest,
@@ -241,9 +252,9 @@ function normalizeExercise(exercise, planId = "a", defaultRest = DEFAULT_REST_SE
   };
 }
 
-function normalizeSets(sets = [], defaultRest = DEFAULT_REST_SECONDS) {
-  const normalized = createEmptySets();
-  sets.slice(0, SETS_PER_EXERCISE).forEach((set, index) => {
+function normalizeSets(sets = [], defaultRest = DEFAULT_REST_SECONDS, count = SETS_PER_EXERCISE) {
+  const normalized = createEmptySets(count);
+  sets.slice(0, count).forEach((set, index) => {
     normalized[index] = set && isValidLoggedSet(set)
       ? { ...set, rest: Number(set.rest) || defaultRest }
       : null;
@@ -503,7 +514,7 @@ function createExerciseDetail(exercise) {
   `;
   headerNode.after(focusMeta);
 
-  exercise.sets = normalizeSets(exercise.sets, state.defaultRest);
+  exercise.sets = normalizeSets(exercise.sets, state.defaultRest, setCount);
   exercise.sets.slice(0, setCount).forEach((set, index) => {
     setsNode.append(createSetForm(exercise, set, index));
   });
@@ -1581,13 +1592,13 @@ els.addExerciseForm.addEventListener("submit", (event) => {
     name,
     group: metricType === "cardio" ? "Cardio" : metricType === "reps" ? "Core" : "Custom",
     metricType,
-    targetSets: SETS_PER_EXERCISE,
+    targetSets: metricType === "cardio" ? 1 : SETS_PER_EXERCISE,
     targetReps: metricType === "cardio" ? "" : "10-12",
     targetWeight: null,
     rest: state.defaultRest,
     comment: buildExerciseComment({ name, group: metricType === "cardio" ? "Cardio" : metricType === "reps" ? "Core" : "Custom", metricType, targetReps: "10-12", rest: state.defaultRest }, 0),
     collapsed: false,
-    sets: createEmptySets()
+    sets: createEmptySets(metricType === "cardio" ? 1 : SETS_PER_EXERCISE)
   };
   state.exercises.push(exercise);
   els.exerciseNameInput.value = "";

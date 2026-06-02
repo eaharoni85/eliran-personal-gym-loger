@@ -1,11 +1,11 @@
 {
   "activeView": "train",
   "activePlanId": "a",
-  "workoutName": "24/05/2026 Sunday A Workout",
+  "workoutName": "02/06/2026 Tuesday A Workout",
   "defaultRest": 90,
   "editMode": false,
   "activeExerciseId": null,
-  "startedAt": "2026-05-24T09:00:00.000Z",
+  "startedAt": "2026-06-02T09:00:00.000Z",
   "exercises": [
     {
       "id": "a-bike",
@@ -18,7 +18,11 @@
       "rest": 90,
       "comment": "מהירות 5 - אינטרוול 4-3",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     },
     {
       "id": "a-chest-press",
@@ -31,7 +35,11 @@
       "rest": 90,
       "comment": "מכונה 29",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     },
     {
       "id": "a-chest-fly",
@@ -44,7 +52,11 @@
       "rest": 90,
       "comment": "מכונה 35",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     },
     {
       "id": "a-up-chest-press",
@@ -57,7 +69,11 @@
       "rest": 90,
       "comment": "מכונה 7",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     },
     {
       "id": "a-shoulder-press",
@@ -70,7 +86,11 @@
       "rest": 90,
       "comment": "מכונה 30",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     },
     {
       "id": "a-lateral-raises",
@@ -82,7 +102,11 @@
       "rest": 90,
       "comment": "משקולות חופשי",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     },
     {
       "id": "a-triceps-w",
@@ -94,7 +118,11 @@
       "rest": 90,
       "comment": "לחציה צרפתית - כנגד מוט - 2 תרגילים",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     },
     {
       "id": "a-triceps-extension",
@@ -106,7 +134,11 @@
       "rest": 90,
       "comment": "כנגד כבל - מוט ישר",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     },
     {
       "id": "a-abs",
@@ -119,7 +151,11 @@
       "rest": 90,
       "comment": "Custom - 3 sets - 10-12 reps - 01:30 rest - 0/3 done",
       "collapsed": false,
-      "sets": [null, null, null]
+      "sets": [
+        null,
+        null,
+        null
+      ]
     }
   ],
   "planTemplates": {
@@ -135,7 +171,11 @@
         "rest": 90,
         "comment": "מהירות 5 - אינטרוול 4-3",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "a-chest-press",
@@ -148,7 +188,11 @@
         "rest": 90,
         "comment": "מכונה 29",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "a-chest-fly",
@@ -161,7 +205,11 @@
         "rest": 90,
         "comment": "מכונה 35",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "a-up-chest-press",
@@ -174,7 +222,11 @@
         "rest": 90,
         "comment": "מכונה 7",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "a-shoulder-press",
@@ -187,7 +239,11 @@
         "rest": 90,
         "comment": "מכונה 30",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "a-lateral-raises",
@@ -199,7 +255,11 @@
         "rest": 90,
         "comment": "משקולות חופשי",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "a-triceps-w",
@@ -211,7 +271,11 @@
         "rest": 90,
         "comment": "לחציה צרפתית - כנגד מוט - 2 תרגילים",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "a-triceps-extension",
@@ -223,7 +287,11 @@
         "rest": 90,
         "comment": "כנגד כבל - מוט ישר",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "a-abs",
@@ -236,7 +304,11 @@
         "rest": 90,
         "comment": "Custom - 3 sets - 10-12 reps - 01:30 rest - 0/3 done",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       }
     ],
     "b": [
@@ -251,7 +323,11 @@
         "rest": 90,
         "comment": "מהירות 5 - אינטרוול 4-3",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-pulldown-wide",
@@ -264,7 +340,11 @@
         "rest": 90,
         "comment": "מוט רחב מעוגל",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-pulldown-narrow",
@@ -277,7 +357,11 @@
         "rest": 90,
         "comment": "מוט צר - כמו של ROW",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-row",
@@ -289,7 +373,11 @@
         "rest": 90,
         "comment": "מוט צר",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-back-fly",
@@ -302,7 +390,11 @@
         "rest": 90,
         "comment": "פרפר אחורי",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-biceps-cable",
@@ -315,7 +407,11 @@
         "rest": 90,
         "comment": "כנגד כבל -משקולת למטה - מוט ישר",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-biceps-dumbbells",
@@ -327,7 +423,11 @@
         "rest": 90,
         "comment": "פטישים - משוקלת חופשית",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-biceps-ez-preacher",
@@ -339,7 +439,11 @@
         "rest": 90,
         "comment": "ספסל + מוט",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-leg-extension",
@@ -352,7 +456,11 @@
         "rest": 90,
         "comment": "מכונה 23",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-leg-curls",
@@ -365,7 +473,11 @@
         "rest": 90,
         "comment": "מכונה 24",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "b-abs",
@@ -378,7 +490,11 @@
         "rest": 90,
         "comment": "Core - 3 sets - 10-12 reps - 01:30 rest - 0/3 done",
         "collapsed": false,
-        "sets": [null, null, null]
+        "sets": [
+          null,
+          null,
+          null
+        ]
       }
     ]
   },

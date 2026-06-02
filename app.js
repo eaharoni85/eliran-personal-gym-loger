@@ -378,7 +378,7 @@ function renderExercises() {
   }
 
   const activeExercise = state.exercises.find((exercise) => exercise.id === state.activeExerciseId);
-  if (activeExercise && !isExerciseComplete(activeExercise)) {
+  if (activeExercise) {
     els.exerciseList.append(createExerciseDetail(activeExercise));
     return;
   }
@@ -412,7 +412,6 @@ function createExerciseMenuItem(exercise) {
     <span class="exercise-progress">${doneCount}/${setCount}</span>
   `;
   openButton.addEventListener("click", () => {
-    if (isComplete && !state.editMode) return;
     state.activeExerciseId = exercise.id;
     saveState();
     render();
@@ -550,6 +549,7 @@ function createMoveButton(exercise, direction) {
 }
 
 function createSetForm(exercise, set, index) {
+  const wasCompleteBeforeSubmit = isExerciseComplete(exercise);
   const metricType = getExerciseMetricType(exercise);
   const previousSet = set || getLastSetValue(exercise, index);
   const weightValue = previousSet?.weight ?? "";
@@ -593,7 +593,7 @@ function createSetForm(exercise, set, index) {
 
     exercise.sets[index] = loggedSet;
     state.lastSetValues[getSetMemoryKey(exercise, index)] = { ...loggedSet, rest: state.defaultRest };
-    if (isExerciseComplete(exercise)) {
+    if (isExerciseComplete(exercise) && !wasCompleteBeforeSubmit) {
       exercise.collapsed = true;
       state.activeExerciseId = null;
     }

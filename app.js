@@ -94,6 +94,7 @@ const els = {
     settings: document.querySelector("#settingsView")
   },
   exerciseList: document.querySelector("#exerciseList"),
+  recoveryDashboard: document.querySelector("#recoveryDashboard"),
   editPanel: document.querySelector("#editPanel"),
   addExerciseForm: document.querySelector("#addExerciseForm"),
   exerciseNameInput: document.querySelector("#exerciseNameInput"),
@@ -103,6 +104,7 @@ const els = {
   reportDetail: document.querySelector("#reportDetail"),
   exerciseReportList: document.querySelector("#exerciseReportList"),
   monthlyReportList: document.querySelector("#monthlyReportList"),
+  recoveryReportList: document.querySelector("#recoveryReportList"),
   refreshReportsBtn: document.querySelector("#refreshReportsBtn"),
   generatedWorkoutName: document.querySelector("#generatedWorkoutName"),
   restDefaultLabel: document.querySelector("#restDefaultLabel"),
@@ -356,6 +358,7 @@ function render() {
   els.restDefaultLabel.textContent = formatSeconds(state.defaultRest);
 
   renderTabs();
+  renderRecoveryDashboard();
   renderExercises();
   renderHistory();
   renderReports();
@@ -378,6 +381,37 @@ function renderTabs() {
 
   Object.entries(els.views).forEach(([name, view]) => {
     view.classList.toggle("active", name === state.activeView);
+  });
+}
+
+function renderRecoveryDashboard() {
+  els.recoveryDashboard.replaceChildren();
+  const groups = getActiveWorkoutMuscleGroups();
+
+  if (!groups.length) {
+    els.recoveryDashboard.hidden = true;
+    return;
+  }
+
+  els.recoveryDashboard.hidden = false;
+  groups.forEach((group) => {
+    const recovery = getMuscleGroupRecovery(group);
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = `recovery-card ${recovery.status}`;
+    card.innerHTML = `
+      <span>${escapeHTML(group)}</span>
+      <strong>${escapeHTML(recovery.label)}</strong>
+      <small>${escapeHTML(recovery.detail)}</small>
+    `;
+    card.addEventListener("click", () => {
+      state.activeView = "reports";
+      saveState();
+      render();
+      showRecoveryReport(group);
+      window.scrollTo({ top: 0, left: 0 });
+    });
+    els.recoveryDashboard.append(card);
   });
 }
 
@@ -408,6 +442,7 @@ function createExerciseMenuItem(exercise) {
   const doneCount = (exercise.sets || []).filter(Boolean).length;
   const setCount = getExerciseSetCount(exercise);
   const isComplete = isExerciseComplete(exercise);
+  const progression = getExerciseProgression(exercise);
   const row = document.createElement("article");
   row.className = "exercise-menu-item";
   row.classList.toggle("complete", isComplete);
@@ -420,6 +455,7 @@ function createExerciseMenuItem(exercise) {
     <span>
       <strong>${escapeHTML(exercise.name)}</strong>
       <small>${escapeHTML(exercise.comment || exerciseSubtitle(exercise))}</small>
+      ${createProgressionSummaryHTML(progression, "compact")}
     </span>
     <span class="exercise-progress">${doneCount}/${setCount}</span>
   `;
@@ -470,6 +506,7 @@ function createExerciseDetail(exercise) {
   const actionsNode = document.createElement("div");
   const doneCount = (exercise.sets || []).filter(Boolean).length;
   const setCount = getExerciseSetCount(exercise);
+  const progression = getExerciseProgression(exercise);
 
   node.classList.add("exercise-focus-card");
   node.classList.toggle("complete", isComplete);
@@ -513,6 +550,11 @@ function createExerciseDetail(exercise) {
     <span>Rest ${formatSeconds(state.defaultRest)}</span>
   `;
   headerNode.after(focusMeta);
+
+  const progressionPanel = document.createElement("div");
+  progressionPanel.className = "progression-panel";
+  progressionPanel.innerHTML = createProgressionSummaryHTML(progression, "detail");
+  focusMeta.after(progressionPanel);
 
   exercise.sets = normalizeSets(exercise.sets, state.defaultRest, setCount);
   exercise.sets.slice(0, setCount).forEach((set, index) => {
@@ -675,6 +717,159 @@ function formatLoggedSet(set, exercise) {
   return `${set.weight}kg x ${set.reps}`;
 }
 
+function getExerciseProgression(exercise) {
+  const current = summarizeExercisePerformance(exercise);
+  const previous = findPreviousExerciseSummary(exercise.name);
+  const records = getExerciseRecords(exercise.name);
+  const metricType = getExerciseMetricType(exercise);
+  const metrics = getProgressionMetrics(metricType);
+
+  return {
+    metricType,
+    current,
+    previous,
+    metrics: metrics.map((metric) => {
+      const currentValue = Number(current[metric.key]) || 0;
+      const previousValue = previous ? Number(previous[metric.key]) || 0 : null;
+      const recordValue = Number(records[metric.key]) || 0;
+      const delta = previous ? currentValue - previousValue : null;
+      return {
+        ...metric,
+        currentValue,
+        previousValue,
+        delta,
+        status: getMetricStatus(delta, Boolean(previous), current.sets > 0),
+        isRecord: current.sets > 0 && currentValue > 0 && currentValue >= recordValue
+      };
+    })
+  };
+}
+
+function createProgressionSummaryHTML(progression, mode = "compact") {
+  if (!progression.current.sets) {
+    return `<div class="progression-row ${mode}"><span class="metric-pill neutral">Log sets to compare</span></div>`;
+  }
+
+  const pills = progression.metrics.map((metric) => `
+    <span class="metric-pill ${metric.status}">
+      <b>${escapeHTML(metric.label)}</b>
+      ${metric.delta === null ? escapeHTML(formatProgressionValue(metric.currentValue, metric)) : escapeHTML(formatSignedNumber(metric.delta, metric.suffix))}
+    </span>
+  `).join("");
+  const records = progression.metrics.filter((metric) => metric.isRecord);
+  const badges = records.length
+    ? `<span class="pr-badge">PR ${escapeHTML(records.map((metric) => metric.shortLabel).join(" / "))}</span>`
+    : "";
+  const note = progression.previous
+    ? ""
+    : `<span class="metric-pill neutral">First logged session</span>`;
+
+  return `<div class="progression-row ${mode}">${pills}${note}${badges}</div>`;
+}
+
+function summarizeExercisePerformance(exercise) {
+  const metricType = getExerciseMetricType(exercise);
+  const sets = (exercise.sets || []).filter(Boolean);
+  const summary = {
+    sets: sets.length,
+    bestWeight: 0,
+    totalReps: 0,
+    totalVolume: 0,
+    distanceKm: 0,
+    calories: 0,
+    minutes: 0
+  };
+
+  sets.forEach((set) => {
+    if (metricType === "cardio") {
+      summary.distanceKm += Number(set.distanceKm) || 0;
+      summary.calories += Number(set.calories) || 0;
+      summary.minutes += Number(set.minutes) || 0;
+      return;
+    }
+
+    const weight = metricType === "reps" ? 1 : Number(set.weight) || 0;
+    const reps = Number(set.reps) || 0;
+    summary.bestWeight = Math.max(summary.bestWeight, Number(set.weight) || 0);
+    summary.totalReps += reps;
+    summary.totalVolume += weight * reps;
+  });
+
+  return summary;
+}
+
+function findPreviousExerciseSummary(exerciseName) {
+  for (const workout of state.history || []) {
+    const exercise = (workout.exercises || []).find((item) => item.name === exerciseName);
+    if (!exercise) continue;
+    const summary = summarizeExercisePerformance(exercise);
+    if (summary.sets > 0) {
+      return {
+        ...summary,
+        workout,
+        date: new Date(workout.finishedAt || workout.startedAt)
+      };
+    }
+  }
+  return null;
+}
+
+function getExerciseRecords(exerciseName) {
+  const records = {
+    bestWeight: 0,
+    totalReps: 0,
+    totalVolume: 0,
+    distanceKm: 0,
+    calories: 0,
+    minutes: 0
+  };
+
+  (state.history || []).forEach((workout) => {
+    const exercise = (workout.exercises || []).find((item) => item.name === exerciseName);
+    if (!exercise) return;
+    const summary = summarizeExercisePerformance(exercise);
+    Object.keys(records).forEach((key) => {
+      records[key] = Math.max(records[key], Number(summary[key]) || 0);
+    });
+  });
+
+  return records;
+}
+
+function getProgressionMetrics(metricType) {
+  if (metricType === "cardio") {
+    return [
+      { key: "distanceKm", label: "KM", shortLabel: "KM", suffix: " km" },
+      { key: "calories", label: "Cal", shortLabel: "Cal", suffix: " cal" },
+      { key: "minutes", label: "Time", shortLabel: "Time", suffix: " min" }
+    ];
+  }
+
+  if (metricType === "reps") {
+    return [
+      { key: "totalReps", label: "Reps", shortLabel: "Reps", suffix: " reps" },
+      { key: "totalVolume", label: "Total", shortLabel: "Total", suffix: " reps" }
+    ];
+  }
+
+  return [
+    { key: "bestWeight", label: "Weight", shortLabel: "KG", suffix: " kg" },
+    { key: "totalReps", label: "Reps", shortLabel: "Reps", suffix: " reps" },
+    { key: "totalVolume", label: "Volume", shortLabel: "Vol", suffix: " kg-reps" }
+  ];
+}
+
+function getMetricStatus(delta, hasPrevious, hasCurrent) {
+  if (!hasCurrent || !hasPrevious || delta === null) return "neutral";
+  if (delta > 0) return "improved";
+  if (delta < 0) return "declined";
+  return "same";
+}
+
+function formatProgressionValue(value, metric) {
+  return `${formatChartNumber(value)}${metric.suffix}`;
+}
+
 function migrateExerciseMemoryKeys(previousName, nextName) {
   if (!state.lastSetValues || previousName === nextName) return;
 
@@ -757,6 +952,82 @@ function isWorkoutComplete() {
   return state.exercises.length > 0 && state.exercises.every(isExerciseComplete);
 }
 
+function getActiveWorkoutMuscleGroups() {
+  return uniqueMuscleGroups(state.exercises || []);
+}
+
+function getWorkoutMuscleGroups(workout) {
+  return uniqueMuscleGroups((workout.exercises || []).filter((exercise) =>
+    (exercise.sets || []).filter(Boolean).length
+  ));
+}
+
+function uniqueMuscleGroups(exercises) {
+  const groups = new Set();
+  exercises.forEach((exercise) => {
+    const group = getMuscleGroup(exercise);
+    if (group) groups.add(group);
+  });
+  return [...groups];
+}
+
+function getMuscleGroup(exercise) {
+  if (getExerciseMetricType(exercise) === "cardio") return "";
+  if (getExerciseMetricType(exercise) === "reps") return "Core";
+  return exercise.group || "Custom";
+}
+
+function getMuscleGroupRecovery(group) {
+  const now = Date.now();
+  const lastWorkout = (state.history || []).find((workout) => getWorkoutMuscleGroups(workout).includes(group));
+
+  if (!lastWorkout) {
+    return {
+      group,
+      status: "neutral",
+      label: "No history",
+      detail: "No completed session yet",
+      lastDate: null,
+      hoursSince: Infinity,
+      daysSince: null,
+      workouts: []
+    };
+  }
+
+  const lastDate = new Date(lastWorkout.finishedAt || lastWorkout.startedAt);
+  const hoursSince = Math.max(0, (now - lastDate.getTime()) / 36e5);
+  const status = hoursSince > 72 ? "ready" : hoursSince >= 48 ? "caution" : "danger";
+  return {
+    group,
+    status,
+    label: status === "ready" ? "Ready" : status === "caution" ? "48-72h" : "<48h",
+    detail: `${formatDaysSince(hoursSince)} since ${formatDateShort(lastDate)}`,
+    lastDate,
+    hoursSince,
+    daysSince: hoursSince / 24,
+    workouts: getMuscleGroupWorkouts(group)
+  };
+}
+
+function getMuscleGroupWorkouts(group) {
+  return (state.history || []).filter((workout) => getWorkoutMuscleGroups(workout).includes(group));
+}
+
+function getRecoveryRows() {
+  const groups = new Set(getActiveWorkoutMuscleGroups());
+  (state.history || []).forEach((workout) => {
+    getWorkoutMuscleGroups(workout).forEach((group) => groups.add(group));
+  });
+  return [...groups].sort().map((group) => getMuscleGroupRecovery(group));
+}
+
+function formatDaysSince(hours) {
+  if (!Number.isFinite(hours)) return "No data";
+  if (hours < 24) return `${Math.max(1, Math.floor(hours))}h`;
+  const days = hours / 24;
+  return `${formatChartNumber(days)}d`;
+}
+
 function renderHistory() {
   els.historyList.replaceChildren();
 
@@ -806,6 +1077,8 @@ function renderReports() {
   const totalSets = completedSets.length;
   const totalVolume = completedSets.reduce((sum, row) => sum + Number(row.set.weight || 0) * Number(row.set.reps || 0), 0);
   const avgWorkoutMs = workouts.length ? totalDurationMs / workouts.length : 0;
+  const recoveryRows = getRecoveryRows();
+  const readyGroups = recoveryRows.filter((row) => row.status === "ready").length;
   const byWorkout = workouts.map((workout) => {
     const sets = (workout.exercises || []).flatMap((exercise) => (exercise.sets || []).filter(Boolean));
     const volume = sets.reduce((sum, set) => sum + Number(set.weight || 0) * Number(set.reps || 0), 0);
@@ -823,11 +1096,13 @@ function renderReports() {
     createStatCard("Gym time", formatDuration(totalDurationMs), `${formatDuration(avgWorkoutMs)} average workout`, () => showGymTimeReport(byWorkout)),
     createStatCard("Avg workout", formatDuration(avgWorkoutMs), `${workouts.length} finished workouts`, () => showGymTimeReport(byWorkout)),
     createStatCard("Sets", totalSets, `${Math.round(totalVolume)} kg-reps volume`, () => showSetReport(completedSets)),
-    createStatCard("Volume", `${Math.round(totalVolume)} kg-reps`, "Weight x reps across all sets", () => showVolumeReport(completedSets))
+    createStatCard("Volume", `${Math.round(totalVolume)} kg-reps`, "Weight x reps across all sets", () => showVolumeReport(completedSets)),
+    createStatCard("Recovery", `${readyGroups}/${recoveryRows.length}`, "Muscle groups ready", () => showRecoveryOverview(recoveryRows))
   );
 
   renderExerciseReports(completedSets.filter((row) => getExerciseMetricType(row.exercise) === "strength"));
   renderMonthlyReports(workouts);
+  renderRecoveryReports(recoveryRows);
 
   if (!workouts.length) {
     els.reportDetail.innerHTML = `<div class="empty">Finish workouts to unlock the report system.</div>`;
@@ -976,6 +1251,31 @@ function renderMonthlyReports(workouts) {
   });
 }
 
+function renderRecoveryReports(recoveryRows) {
+  els.recoveryReportList.replaceChildren();
+
+  if (!recoveryRows.length) {
+    els.recoveryReportList.append(emptyMessage("Recovery data appears after workouts are saved."));
+    return;
+  }
+
+  recoveryRows.forEach((row) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = `report-item recovery-report-item ${row.status}`;
+    item.innerHTML = `
+      <div>
+        <strong>${escapeHTML(row.group)}</strong>
+        <p>${escapeHTML(row.label)} - ${escapeHTML(row.detail)}</p>
+      </div>
+      <span class="recovery-dot ${row.status}" aria-hidden="true"></span>
+      <p class="report-foot">${row.workouts.length} workouts logged for this group</p>
+    `;
+    item.addEventListener("click", () => showRecoveryReport(row.group));
+    els.recoveryReportList.append(item);
+  });
+}
+
 function showWorkoutReport(rows) {
   const newestFirst = [...rows].sort((a, b) => b.date - a.date);
   const chart = createTrendChart(
@@ -998,6 +1298,59 @@ function showWorkoutReport(rows) {
     button.addEventListener("click", () => {
       const row = rows.find((item) => (item.workout.id || item.workout.startedAt) === button.dataset.workoutId);
       if (row) showSingleWorkoutReport(row.workout);
+    });
+  });
+}
+
+function showRecoveryOverview(rows = getRecoveryRows()) {
+  renderReportDetail("Muscle Recovery", [
+    ["Ready", rows.filter((row) => row.status === "ready").length],
+    ["48-72h", rows.filter((row) => row.status === "caution").length],
+    ["<48h", rows.filter((row) => row.status === "danger").length]
+  ], "", rows.map((row) => `
+    <button class="detail-row recovery-detail-row ${row.status}" type="button" data-group="${escapeHTML(row.group)}">
+      <strong>${escapeHTML(row.group)}</strong>
+      <span>${escapeHTML(row.label)} - ${escapeHTML(row.detail)} - ${row.workouts.length} sessions</span>
+    </button>
+  `).join(""));
+
+  els.reportDetail.querySelectorAll("[data-group]").forEach((button) => {
+    button.addEventListener("click", () => showRecoveryReport(button.dataset.group));
+  });
+}
+
+function showRecoveryReport(group) {
+  const recovery = getMuscleGroupRecovery(group);
+  const workouts = recovery.workouts;
+  renderReportDetail(`${group} Recovery`, [
+    ["Status", recovery.label],
+    ["Last trained", recovery.lastDate ? formatDateShort(recovery.lastDate) : "None"],
+    ["Days since", recovery.daysSince === null ? "No data" : formatChartNumber(recovery.daysSince)]
+  ], createTrendChart(
+    workouts.slice().reverse().map((workout) => durationMinutes(workout.durationMs)),
+    workouts.slice().reverse().map((workout) =>
+      (workout.exercises || [])
+        .filter((exercise) => getMuscleGroup(exercise) === group)
+        .flatMap((exercise) => (exercise.sets || []).filter(Boolean))
+        .reduce((sum, set) => sum + Number(set.weight || 0) * Number(set.reps || 0), 0)
+    ),
+    { lineLabel: "min", barLabel: "volume", pointLabels: workouts.slice().reverse().map((workout) => formatDateShort(workout.finishedAt || workout.startedAt)) }
+  ), workouts.map((workout) => {
+    const exercises = (workout.exercises || []).filter((exercise) => getMuscleGroup(exercise) === group);
+    const sets = exercises.flatMap((exercise) => (exercise.sets || []).filter(Boolean));
+    const volume = sets.reduce((sum, set) => sum + Number(set.weight || 0) * Number(set.reps || 0), 0);
+    return `
+      <button class="detail-row" type="button" data-workout-id="${escapeHTML(workout.id || workout.startedAt)}">
+        <strong>${escapeHTML(workout.name)}</strong>
+        <span>${formatDateShort(workout.finishedAt || workout.startedAt)} - ${exercises.length} exercises - ${sets.length} sets - ${Math.round(volume)} volume</span>
+      </button>
+    `;
+  }).join(""));
+
+  els.reportDetail.querySelectorAll("[data-workout-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const workout = workouts.find((entry) => (entry.id || entry.startedAt) === button.dataset.workoutId);
+      if (workout) showSingleWorkoutReport(workout);
     });
   });
 }

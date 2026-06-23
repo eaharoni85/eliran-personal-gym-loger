@@ -437,6 +437,148 @@ button:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+.recovery-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.recovery-dashboard[hidden] {
+  display: none;
+}
+
+.recovery-card {
+  display: grid;
+  gap: 4px;
+  min-height: 76px;
+  padding: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 8px;
+  color: var(--ink);
+  text-align: left;
+}
+
+.recovery-card span,
+.recovery-card small {
+  color: var(--muted);
+}
+
+.recovery-card strong {
+  font-size: 1rem;
+}
+
+.recovery-card.ready,
+.recovery-report-item.ready,
+.recovery-detail-row.ready {
+  border-left-color: #16a34a;
+}
+
+.recovery-report-item,
+.recovery-detail-row {
+  border-left-width: 4px;
+}
+
+.recovery-card.caution,
+.recovery-report-item.caution,
+.recovery-detail-row.caution {
+  border-left-color: #eab308;
+}
+
+.recovery-card.danger,
+.recovery-report-item.danger,
+.recovery-detail-row.danger {
+  border-left-color: #ef4444;
+}
+
+.recovery-card.neutral,
+.recovery-report-item.neutral,
+.recovery-detail-row.neutral {
+  border-left-color: #94a3b8;
+}
+
+.progression-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.progression-row.detail {
+  padding: 0 14px;
+  margin: 8px 0 0;
+}
+
+.metric-pill,
+.pr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.metric-pill b {
+  font-size: 0.68rem;
+  opacity: 0.82;
+}
+
+.metric-pill.improved,
+.pr-badge {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.metric-pill.same {
+  color: #854d0e;
+  background: #fef9c3;
+  border-color: #fde047;
+}
+
+.metric-pill.declined {
+  color: #991b1b;
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.metric-pill.neutral {
+  color: #475569;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.recovery-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  justify-self: end;
+}
+
+.recovery-dot.ready {
+  background: #22c55e;
+}
+
+.recovery-dot.caution {
+  background: #eab308;
+}
+
+.recovery-dot.danger {
+  background: #ef4444;
+}
+
+.recovery-dot.neutral {
+  background: #94a3b8;
+}
+
 .exercise-focus-card {
   display: grid;
   gap: 12px;
@@ -1074,6 +1216,47 @@ select {
 .exercise-progress {
   color: #34d399;
   font-size: 0.82rem;
+}
+
+.recovery-card {
+  background: #202126;
+  border-color: #31333a;
+  color: #f9fafb;
+}
+
+.recovery-card:hover,
+.recovery-card:active {
+  background: #26282e;
+}
+
+.recovery-card span,
+.recovery-card small {
+  color: #9ca3af;
+}
+
+.metric-pill.improved,
+.pr-badge {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.38);
+}
+
+.metric-pill.same {
+  color: #fde68a;
+  background: rgba(234, 179, 8, 0.14);
+  border-color: rgba(234, 179, 8, 0.36);
+}
+
+.metric-pill.declined {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.metric-pill.neutral {
+  color: #cbd5e1;
+  background: #2b2d33;
+  border-color: #3c3f48;
 }
 
 .complete-mark {

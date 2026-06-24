@@ -863,6 +863,62 @@ button:focus-visible {
   font-weight: 700;
 }
 
+.daily-checkin {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.daily-checkin h3 {
+  margin: 2px 0 0;
+}
+
+.check-toggle,
+.weight-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.check-toggle input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+}
+
+.weight-input-row input {
+  width: 120px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-align: right;
+  font-weight: 900;
+}
+
+.recommendation-item {
+  border-left-width: 4px;
+  border-left-color: #38bdf8;
+}
+
+.detail-section-label {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: 0.86rem;
+}
+
 .compact-setting {
   padding: 0;
   background: transparent;
@@ -1257,6 +1313,29 @@ select {
   color: #cbd5e1;
   background: #2b2d33;
   border-color: #3c3f48;
+}
+
+.daily-checkin {
+  background: #202126;
+  border-color: #31333a;
+  box-shadow: none;
+}
+
+.check-toggle,
+.weight-input-row {
+  background: #17181c;
+  border-color: #31333a;
+  color: #f9fafb;
+}
+
+.weight-input-row input {
+  background: #24262c;
+  border-color: #3a3d45;
+  color: #f9fafb;
+}
+
+.detail-section-label {
+  color: #f9fafb;
 }
 
 .complete-mark {

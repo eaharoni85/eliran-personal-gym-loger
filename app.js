@@ -55,6 +55,7 @@ const defaultState = {
     elapsedMs: 0
   },
   workoutComplete: false,
+  dailyLog: {},
   history: []
 };
 
@@ -102,10 +103,16 @@ const els = {
   historyList: document.querySelector("#historyList"),
   statsGrid: document.querySelector("#statsGrid"),
   reportDetail: document.querySelector("#reportDetail"),
+  recommendationList: document.querySelector("#recommendationList"),
   exerciseReportList: document.querySelector("#exerciseReportList"),
   monthlyReportList: document.querySelector("#monthlyReportList"),
   recoveryReportList: document.querySelector("#recoveryReportList"),
   refreshReportsBtn: document.querySelector("#refreshReportsBtn"),
+  checkinDateLabel: document.querySelector("#checkinDateLabel"),
+  creatineInput: document.querySelector("#creatineInput"),
+  proteinInput: document.querySelector("#proteinInput"),
+  bodyweightInput: document.querySelector("#bodyweightInput"),
+  saveCheckinBtn: document.querySelector("#saveCheckinBtn"),
   generatedWorkoutName: document.querySelector("#generatedWorkoutName"),
   restDefaultLabel: document.querySelector("#restDefaultLabel"),
   exportBtn: document.querySelector("#exportBtn"),
@@ -199,6 +206,7 @@ function loadState() {
         startedAt: saved.workoutTimer?.startedAt || null,
         elapsedMs: Number(saved.workoutTimer?.elapsedMs) || 0
       },
+      dailyLog: normalizeDailyLog(saved.dailyLog),
       planTemplates,
       workoutName: generateWorkoutName(saved.startedAt || new Date().toISOString(), activePlanId),
       exercises: migratedExercises.map((exercise) => normalizeExercise(exercise, activePlanId, defaultRest))
@@ -228,6 +236,22 @@ function normalizePlanTemplates(savedTemplates, activePlanId, activeExercises, d
   }
 
   return templates;
+}
+
+function normalizeDailyLog(log = {}) {
+  return Object.fromEntries(
+    Object.entries(log || {}).map(([dateKey, entry]) => [
+      dateKey,
+      {
+        creatine: Boolean(entry?.creatine),
+        protein: Boolean(entry?.protein),
+        bodyweight: Number.isFinite(Number(entry?.bodyweight)) && Number(entry.bodyweight) > 0
+          ? Number(entry.bodyweight)
+          : null,
+        updatedAt: entry?.updatedAt || null
+      }
+    ])
+  );
 }
 
 function normalizeExercise(exercise, planId = "a", defaultRest = DEFAULT_REST_SECONDS) {
@@ -358,6 +382,7 @@ function render() {
   els.restDefaultLabel.textContent = formatSeconds(state.defaultRest);
 
   renderTabs();
+  renderDailyCheckin();
   renderRecoveryDashboard();
   renderExercises();
   renderHistory();
@@ -382,6 +407,33 @@ function renderTabs() {
   Object.entries(els.views).forEach(([name, view]) => {
     view.classList.toggle("active", name === state.activeView);
   });
+}
+
+function renderDailyCheckin() {
+  const todayKey = getDateKey(new Date());
+  const entry = state.dailyLog?.[todayKey] || {};
+  els.checkinDateLabel.textContent = new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit"
+  }).format(new Date());
+  els.creatineInput.checked = Boolean(entry.creatine);
+  els.proteinInput.checked = Boolean(entry.protein);
+  els.bodyweightInput.value = entry.bodyweight || "";
+}
+
+function saveDailyCheckin() {
+  const todayKey = getDateKey(new Date());
+  const bodyweight = Number(els.bodyweightInput.value);
+  state.dailyLog ||= {};
+  state.dailyLog[todayKey] = {
+    creatine: els.creatineInput.checked,
+    protein: els.proteinInput.checked,
+    bodyweight: Number.isFinite(bodyweight) && bodyweight > 0 ? bodyweight : null,
+    updatedAt: new Date().toISOString()
+  };
+  saveState();
+  render();
 }
 
 function renderRecoveryDashboard() {
@@ -1028,6 +1080,257 @@ function formatDaysSince(hours) {
   return `${formatChartNumber(days)}d`;
 }
 
+function getDateKey(value) {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date, amount) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function getWorkoutDateKeys() {
+  const keys = new Set();
+  (state.history || []).forEach((workout) => {
+    keys.add(getDateKey(workout.finishedAt || workout.startedAt));
+  });
+  if (hasLoggedSets()) {
+    keys.add(getDateKey(state.startedAt || new Date()));
+  }
+  return keys;
+}
+
+function getFitnessScore() {
+  const today = new Date();
+  const workoutKeys = getWorkoutDateKeys();
+  const weekDates = getDateRange(addDays(today, -6), today);
+  const monthDates = getDateRange(addDays(today, -29), today);
+  const weekWorkouts = weekDates.filter((key) => workoutKeys.has(key)).length;
+  const monthWorkouts = monthDates.filter((key) => workoutKeys.has(key)).length;
+  const weeklyScore = calculateConsistencyScore(weekDates, 3);
+  const monthlyScore = calculateConsistencyScore(monthDates, 12);
+
+  return {
+    weeklyScore,
+    monthlyConsistency: monthlyScore,
+    currentStreak: getCurrentConsistencyStreak(),
+    workoutsThisWeek: weekWorkouts,
+    workoutsThisMonth: monthWorkouts
+  };
+}
+
+function calculateConsistencyScore(dateKeys, workoutTarget) {
+  const workoutKeys = getWorkoutDateKeys();
+  const workoutCount = dateKeys.filter((key) => workoutKeys.has(key)).length;
+  const workoutScore = Math.min(1, workoutCount / workoutTarget) * 40;
+  const habitScore = ["creatine", "protein", "bodyweight"].reduce((sum, key) => {
+    const hits = dateKeys.filter((dateKey) => {
+      const entry = state.dailyLog?.[dateKey];
+      return key === "bodyweight" ? Number(entry?.bodyweight) > 0 : Boolean(entry?.[key]);
+    }).length;
+    return sum + (hits / Math.max(dateKeys.length, 1)) * 20;
+  }, 0);
+  return Math.round(Math.min(100, workoutScore + habitScore));
+}
+
+function getCurrentConsistencyStreak() {
+  const workoutKeys = getWorkoutDateKeys();
+  let streak = 0;
+  let date = new Date();
+
+  while (streak < 365) {
+    const key = getDateKey(date);
+    const entry = state.dailyLog?.[key];
+    const hasCheckin = Boolean(entry?.creatine || entry?.protein || Number(entry?.bodyweight) > 0);
+    if (!workoutKeys.has(key) && !hasCheckin) break;
+    streak += 1;
+    date = addDays(date, -1);
+  }
+
+  return streak;
+}
+
+function getDateRange(startDate, endDate) {
+  const dates = [];
+  let date = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  while (date <= end) {
+    dates.push(getDateKey(date));
+    date = addDays(date, 1);
+  }
+  return dates;
+}
+
+function getBodyweightTrend() {
+  const entries = Object.entries(state.dailyLog || {})
+    .map(([dateKey, entry]) => ({ dateKey, date: new Date(`${dateKey}T12:00:00`), weight: Number(entry?.bodyweight) || 0 }))
+    .filter((entry) => entry.weight > 0)
+    .sort((a, b) => a.date - b.date);
+  const latest = entries[entries.length - 1] || null;
+  const avg7 = averageRecentWeights(entries, 7);
+  const avg30 = averageRecentWeights(entries, 30);
+  const previous7 = averageWeightsBetween(entries, 14, 8);
+  const weeklyRate = latest && avg7 !== null && previous7 !== null ? avg7 - previous7 : 0;
+  const direction = Math.abs(weeklyRate) < 0.2 ? "stable" : weeklyRate > 0 ? "gaining" : "losing";
+
+  return {
+    entries,
+    current: latest?.weight || null,
+    avg7,
+    avg30,
+    weeklyRate,
+    direction
+  };
+}
+
+function averageRecentWeights(entries, days) {
+  if (!entries.length) return null;
+  const latest = entries[entries.length - 1].date;
+  const cutoff = addDays(latest, -(days - 1));
+  const values = entries.filter((entry) => entry.date >= cutoff).map((entry) => entry.weight);
+  return values.length ? average(values) : null;
+}
+
+function averageWeightsBetween(entries, daysAgoStart, daysAgoEnd) {
+  if (!entries.length) return null;
+  const latest = entries[entries.length - 1].date;
+  const start = addDays(latest, -daysAgoStart);
+  const end = addDays(latest, -daysAgoEnd);
+  const values = entries.filter((entry) => entry.date >= start && entry.date <= end).map((entry) => entry.weight);
+  return values.length ? average(values) : null;
+}
+
+function average(values) {
+  return values.reduce((sum, value) => sum + value, 0) / Math.max(values.length, 1);
+}
+
+function getWorkoutVolume(workout) {
+  return (workout.exercises || []).reduce((sum, exercise) => sum + getExerciseVolume(exercise), 0);
+}
+
+function getExerciseVolume(exercise) {
+  return (exercise.sets || []).filter(Boolean).reduce((sum, set) =>
+    sum + Number(set.weight || 0) * Number(set.reps || 0), 0);
+}
+
+function getVolumeByMuscleGroup(workouts = state.history || []) {
+  const byGroup = new Map();
+  workouts.forEach((workout) => {
+    (workout.exercises || []).forEach((exercise) => {
+      const group = getMuscleGroup(exercise);
+      if (!group) return;
+      const item = byGroup.get(group) || { group, volume: 0, sets: 0, workouts: 0 };
+      const sets = (exercise.sets || []).filter(Boolean);
+      const volume = getExerciseVolume(exercise);
+      if (sets.length) item.workouts += 1;
+      item.volume += volume;
+      item.sets += sets.length;
+      byGroup.set(group, item);
+    });
+  });
+  return [...byGroup.values()].sort((a, b) => b.volume - a.volume);
+}
+
+function getMonthlyVolumeRows(workouts = state.history || []) {
+  const byMonth = new Map();
+  workouts.forEach((workout) => {
+    const date = new Date(workout.finishedAt || workout.startedAt);
+    const key = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(date);
+    const item = byMonth.get(key) || { key, monthDate: new Date(date.getFullYear(), date.getMonth(), 1), volume: 0, workouts: 0 };
+    item.volume += getWorkoutVolume(workout);
+    item.workouts += 1;
+    byMonth.set(key, item);
+  });
+  return [...byMonth.values()].sort((a, b) => a.monthDate - b.monthDate);
+}
+
+function getExerciseImprovementRows() {
+  const byExercise = new Map();
+  (state.history || []).slice().reverse().forEach((workout) => {
+    (workout.exercises || []).forEach((exercise) => {
+      if (getExerciseMetricType(exercise) !== "strength") return;
+      const volume = getExerciseVolume(exercise);
+      if (volume <= 0) return;
+      const item = byExercise.get(exercise.name) || { name: exercise.name, points: [] };
+      item.points.push({ workout, date: new Date(workout.finishedAt || workout.startedAt), volume });
+      byExercise.set(exercise.name, item);
+    });
+  });
+
+  return [...byExercise.values()].map((item) => {
+    const first = item.points[0];
+    const last = item.points[item.points.length - 1];
+    const delta = first && last ? last.volume - first.volume : 0;
+    const percent = first?.volume ? (delta / first.volume) * 100 : 0;
+    return { ...item, delta, percent };
+  }).filter((item) => item.points.length > 1).sort((a, b) => b.percent - a.percent);
+}
+
+function getSmartRecommendations() {
+  const recommendations = [];
+  const recoveryRows = getRecoveryRows();
+  const weightTrend = getBodyweightTrend();
+  const score = getFitnessScore();
+  const improvements = getExerciseImprovementRows();
+
+  getExerciseTrendSummaries().forEach((item) => {
+    const recent = item.points.slice(-3);
+    if (recent.length === 3 && recent[2].strengthScore <= recent[0].strengthScore) {
+      recommendations.push(`${item.name} has not improved for 3 workouts.`);
+    }
+  });
+
+  improvements.filter((item) => item.percent >= 10).slice(0, 2).forEach((item) => {
+    recommendations.push(`${item.name} increased ${Math.round(item.percent)}% by volume across logged history.`);
+  });
+
+  recoveryRows.filter((row) => Number.isFinite(row.daysSince) && row.daysSince >= 8).forEach((row) => {
+    recommendations.push(`You skipped ${row.group} for ${Math.floor(row.daysSince)} days.`);
+  });
+
+  if (Math.abs(weightTrend.weeklyRate) < 0.2 && score.workoutsThisWeek >= 3) {
+    recommendations.push("Bodyweight is unchanged despite workout consistency.");
+  }
+
+  if (score.weeklyScore >= 80) {
+    recommendations.push("Weekly consistency is strong. Keep the routine stable.");
+  } else if (score.weeklyScore < 50) {
+    recommendations.push("Weekly consistency is low. Add check-ins or finish workouts to lift the score.");
+  }
+
+  return recommendations.slice(0, 6);
+}
+
+function getExerciseTrendSummaries() {
+  const byExercise = new Map();
+  (state.history || []).slice().reverse().forEach((workout) => {
+    (workout.exercises || []).forEach((exercise) => {
+      if (getExerciseMetricType(exercise) !== "strength") return;
+      const summary = summarizeExercisePerformance(exercise);
+      if (!summary.sets) return;
+      const item = byExercise.get(exercise.name) || { name: exercise.name, points: [] };
+      item.points.push({
+        date: new Date(workout.finishedAt || workout.startedAt),
+        workoutName: workout.name,
+        strengthScore: getBestEstimatedStrength(exercise),
+        volume: summary.totalVolume
+      });
+      byExercise.set(exercise.name, item);
+    });
+  });
+  return [...byExercise.values()];
+}
+
+function getBestEstimatedStrength(exercise) {
+  return (exercise.sets || []).filter(Boolean).reduce((best, set) =>
+    Math.max(best, estimateOneRepMax(set.weight, set.reps)), 0);
+}
+
 function renderHistory() {
   els.historyList.replaceChildren();
 
@@ -1079,9 +1382,11 @@ function renderReports() {
   const avgWorkoutMs = workouts.length ? totalDurationMs / workouts.length : 0;
   const recoveryRows = getRecoveryRows();
   const readyGroups = recoveryRows.filter((row) => row.status === "ready").length;
+  const fitnessScore = getFitnessScore();
+  const weightTrend = getBodyweightTrend();
   const byWorkout = workouts.map((workout) => {
     const sets = (workout.exercises || []).flatMap((exercise) => (exercise.sets || []).filter(Boolean));
-    const volume = sets.reduce((sum, set) => sum + Number(set.weight || 0) * Number(set.reps || 0), 0);
+    const volume = getWorkoutVolume(workout);
     return {
       workout,
       sets: sets.length,
@@ -1092,6 +1397,8 @@ function renderReports() {
   });
 
   els.statsGrid.replaceChildren(
+    createStatCard("Fitness score", fitnessScore.weeklyScore, `${fitnessScore.currentStreak} day streak - ${fitnessScore.monthlyConsistency}% month`, () => showFitnessScoreReport(fitnessScore)),
+    createStatCard("Bodyweight", weightTrend.current ? `${formatChartNumber(weightTrend.current)} kg` : "No data", `${getWeightTrendArrow(weightTrend.direction)} ${formatSignedNumber(weightTrend.weeklyRate, " kg/week")}`, () => showWeightTrendReport(weightTrend)),
     createStatCard("Workouts", workouts.length, `${totalSets} sets logged`, () => showWorkoutReport(byWorkout)),
     createStatCard("Gym time", formatDuration(totalDurationMs), `${formatDuration(avgWorkoutMs)} average workout`, () => showGymTimeReport(byWorkout)),
     createStatCard("Avg workout", formatDuration(avgWorkoutMs), `${workouts.length} finished workouts`, () => showGymTimeReport(byWorkout)),
@@ -1103,6 +1410,7 @@ function renderReports() {
   renderExerciseReports(completedSets.filter((row) => getExerciseMetricType(row.exercise) === "strength"));
   renderMonthlyReports(workouts);
   renderRecoveryReports(recoveryRows);
+  renderRecommendations();
 
   if (!workouts.length) {
     els.reportDetail.innerHTML = `<div class="empty">Finish workouts to unlock the report system.</div>`;
@@ -1276,6 +1584,90 @@ function renderRecoveryReports(recoveryRows) {
   });
 }
 
+function renderRecommendations() {
+  els.recommendationList.replaceChildren();
+  const recommendations = getSmartRecommendations();
+
+  if (!recommendations.length) {
+    els.recommendationList.append(emptyMessage("Recommendations appear after more workouts and check-ins."));
+    return;
+  }
+
+  recommendations.forEach((text) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "report-item recommendation-item";
+    item.innerHTML = `
+      <div>
+        <strong>Coach note</strong>
+        <p>${escapeHTML(text)}</p>
+      </div>
+    `;
+    item.addEventListener("click", () => showRecommendationReport(text));
+    els.recommendationList.append(item);
+  });
+}
+
+function showFitnessScoreReport(score = getFitnessScore()) {
+  const weekDates = getDateRange(addDays(new Date(), -6), new Date());
+  const rows = weekDates.slice().reverse().map((dateKey) => {
+    const entry = state.dailyLog?.[dateKey] || {};
+    const didWorkout = getWorkoutDateKeys().has(dateKey);
+    const dayScore = Math.round(
+      (didWorkout ? 40 : 0) +
+      (entry.creatine ? 20 : 0) +
+      (entry.protein ? 20 : 0) +
+      (Number(entry.bodyweight) > 0 ? 20 : 0)
+    );
+    return `
+      <div class="detail-row">
+        <strong>${escapeHTML(dateKey)}</strong>
+        <span>${dayScore}/100 - ${didWorkout ? "workout" : "no workout"} - creatine ${entry.creatine ? "yes" : "no"} - protein ${entry.protein ? "yes" : "no"} - weight ${entry.bodyweight || "no"}</span>
+      </div>
+    `;
+  }).join("");
+
+  renderReportDetail("Fitness Consistency Score", [
+    ["Weekly score", `${score.weeklyScore}/100`],
+    ["Monthly", `${score.monthlyConsistency}%`],
+    ["Current streak", `${score.currentStreak} days`]
+  ], createTrendChart(
+    weekDates.map((dateKey) => state.dailyLog?.[dateKey]?.bodyweight || 0),
+    weekDates.map((dateKey) => getWorkoutDateKeys().has(dateKey) ? 1 : 0),
+    { lineLabel: "body kg", barLabel: "workout", pointLabels: weekDates }
+  ), `
+    <div class="metric-note">Score = workouts up to 40 points, creatine 20, protein 20, bodyweight update 20. Weekly workout target is 3 sessions; monthly target is 12.</div>
+    ${rows}
+  `);
+}
+
+function showWeightTrendReport(trend = getBodyweightTrend()) {
+  const entries = trend.entries || [];
+  renderReportDetail("Bodyweight Trend", [
+    ["Current", trend.current ? `${formatChartNumber(trend.current)} kg` : "No data"],
+    ["7 day avg", trend.avg7 ? `${formatChartNumber(trend.avg7)} kg` : "No data"],
+    ["30 day avg", trend.avg30 ? `${formatChartNumber(trend.avg30)} kg` : "No data"],
+    ["Weekly rate", `${getWeightTrendArrow(trend.direction)} ${formatSignedNumber(trend.weeklyRate, " kg")}`]
+  ], createTrendChart(
+    entries.map((entry) => entry.weight),
+    entries.map(() => 1),
+    { lineLabel: "kg", barLabel: "entry", pointLabels: entries.map((entry) => entry.dateKey) }
+  ), entries.slice().reverse().map((entry) => `
+    <div class="detail-row">
+      <strong>${escapeHTML(entry.dateKey)}</strong>
+      <span>${formatChartNumber(entry.weight)} kg</span>
+    </div>
+  `).join(""));
+}
+
+function showRecommendationReport(text) {
+  renderReportDetail("Smart Recommendation", [
+    ["Recommendation", text],
+    ["Weekly score", `${getFitnessScore().weeklyScore}/100`],
+    ["Workouts", (state.history || []).length]
+  ], "", `<div class="metric-note">${escapeHTML(text)}</div>`);
+}
+
 function showWorkoutReport(rows) {
   const newestFirst = [...rows].sort((a, b) => b.date - a.date);
   const chart = createTrendChart(
@@ -1413,20 +1805,42 @@ function showSetReport(rows) {
 
 function showVolumeReport(rows) {
   const byExercise = summarizeSetsByExercise(rows).sort((a, b) => b.volume - a.volume);
+  const byGroup = getVolumeByMuscleGroup();
+  const monthly = getMonthlyVolumeRows();
+  const improvements = getExerciseImprovementRows().slice(0, 5);
+  const totalVolume = byExercise.reduce((sum, row) => sum + row.volume, 0);
   renderReportDetail("Volume Leaders", [
-    ["Total volume", `${Math.round(byExercise.reduce((sum, row) => sum + row.volume, 0))} kg-reps`],
+    ["Total volume", `${Math.round(totalVolume)} kg-reps`],
     ["Top exercise", byExercise[0]?.name || "None"],
-    ["Exercises", byExercise.length]
+    ["Top group", byGroup[0]?.group || "None"]
   ], createTrendChart(
-    byExercise.map((row) => row.bestWeight),
-    byExercise.map((row) => row.volume),
-    { lineLabel: "best kg", barLabel: "volume", pointLabels: byExercise.map((row) => row.name) }
-  ), byExercise.map((row) => `
-    <div class="detail-row">
-      <strong>${escapeHTML(row.name)}</strong>
-      <span>${Math.round(row.volume)} volume - best ${row.bestWeight} kg - ${row.sets} sets</span>
-    </div>
-  `).join(""));
+    monthly.map((row) => row.volume),
+    monthly.map((row) => row.workouts),
+    { lineLabel: "monthly volume", barLabel: "workouts", pointLabels: monthly.map((row) => row.key) }
+  ), `
+    <div class="metric-note">Workout volume = weight x reps across all logged strength sets. Cardio is tracked separately and not included in kg-reps volume.</div>
+    <strong class="detail-section-label">By muscle group</strong>
+    ${byGroup.map((row) => `
+      <div class="detail-row">
+        <strong>${escapeHTML(row.group)}</strong>
+        <span>${Math.round(row.volume)} volume - ${row.sets} sets - ${row.workouts} exercise logs</span>
+      </div>
+    `).join("") || `<p class="empty">No muscle volume yet.</p>`}
+    <strong class="detail-section-label">Largest improvements</strong>
+    ${improvements.map((row) => `
+      <div class="detail-row">
+        <strong>${escapeHTML(row.name)}</strong>
+        <span>${formatSignedNumber(row.delta, " kg-reps")} - ${formatSignedNumber(row.percent, "%")}</span>
+      </div>
+    `).join("") || `<p class="empty">Need at least two logged workouts for improvement ranking.</p>`}
+    <strong class="detail-section-label">Exercise leaders</strong>
+    ${byExercise.map((row) => `
+      <div class="detail-row">
+        <strong>${escapeHTML(row.name)}</strong>
+        <span>${Math.round(row.volume)} volume - best ${row.bestWeight} kg - ${row.sets} sets</span>
+      </div>
+    `).join("")}
+  `);
 }
 
 function showExerciseReport(item) {
@@ -1590,6 +2004,12 @@ function formatSignedNumber(value, suffix = "") {
   if (value > 0) return `+${formatChartNumber(value)}${suffix}`;
   if (value < 0) return `${formatChartNumber(value)}${suffix}`;
   return `0${suffix}`;
+}
+
+function getWeightTrendArrow(direction) {
+  if (direction === "gaining") return "↑ gaining";
+  if (direction === "losing") return "↓ losing";
+  return "→ stable";
 }
 
 function estimateOneRepMax(weight, reps) {
@@ -1977,6 +2397,14 @@ els.restDefaultSelect.addEventListener("change", (event) => {
   render();
 });
 
+els.saveCheckinBtn.addEventListener("click", saveDailyCheckin);
+
+["change", "blur"].forEach((eventName) => {
+  els.creatineInput.addEventListener(eventName, saveDailyCheckin);
+  els.proteinInput.addEventListener(eventName, saveDailyCheckin);
+});
+els.bodyweightInput.addEventListener("blur", saveDailyCheckin);
+
 els.exportBtn.addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -1993,7 +2421,7 @@ els.importInput.addEventListener("change", async (event) => {
 
   try {
     const imported = JSON.parse(await file.text());
-    state = { ...defaultState, ...imported };
+    state = { ...defaultState, ...imported, dailyLog: normalizeDailyLog(imported.dailyLog) };
     saveState();
     render();
   } catch {
@@ -2004,7 +2432,7 @@ els.importInput.addEventListener("change", async (event) => {
 });
 
 els.clearDataBtn.addEventListener("click", () => {
-  if (!confirm("Clear all local data on this device/browser? This removes the current workout, workout history, reports data, remembered weights/reps, custom exercises, edit settings, and timer state.")) return;
+  if (!confirm("Clear all local data on this device/browser? This removes the current workout, workout history, reports data, remembered weights/reps, daily check-ins, bodyweight, custom exercises, edit settings, and timer state.")) return;
   localStorage.removeItem(STORAGE_KEY);
   state = structuredClone(defaultState);
   stopTimer();

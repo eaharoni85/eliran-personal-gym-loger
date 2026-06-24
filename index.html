@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111827">
     <title>Eliran Personal Gym Loger</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="styles.css?v=36">
+    <link rel="stylesheet" href="styles.css?v=37">
   </head>
   <body>
     <div class="app-shell">
@@ -122,6 +122,10 @@
           <div class="stats-grid" id="statsGrid"></div>
           <div class="report-detail" id="reportDetail"></div>
           <div class="report-section">
+            <h3>Coach insights</h3>
+            <div class="report-list" id="recommendationList"></div>
+          </div>
+          <div class="report-section">
             <h3>Exercise trends</h3>
             <div class="report-list" id="exerciseReportList"></div>
           </div>
@@ -137,6 +141,25 @@
 
         <section class="view" id="settingsView">
           <div class="settings-grid">
+            <div class="daily-checkin">
+              <div>
+                <p class="label">Daily check-in</p>
+                <h3 id="checkinDateLabel">Today</h3>
+              </div>
+              <label class="check-toggle">
+                <input id="creatineInput" type="checkbox">
+                <span>Creatine</span>
+              </label>
+              <label class="check-toggle">
+                <input id="proteinInput" type="checkbox">
+                <span>Protein shake</span>
+              </label>
+              <label class="weight-input-row">
+                <span>Bodyweight</span>
+                <input id="bodyweightInput" type="number" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" min="0" step="0.1" placeholder="kg">
+              </label>
+              <button class="primary-button" id="saveCheckinBtn" type="button">Save check-in</button>
+            </div>
             <div class="setting-row">
               <span>Workout name</span>
               <strong id="generatedWorkoutName">Auto generated</strong>
@@ -155,7 +178,7 @@
             </div>
             <div class="setting-row">
               <span>Clear local data removes</span>
-              <strong>Current workout, history, reports data, remembered weights/reps, custom exercises, and settings on this device/browser.</strong>
+              <strong>Current workout, history, reports data, daily check-ins, bodyweight, remembered weights/reps, custom exercises, and settings on this device/browser.</strong>
             </div>
             <label class="setting-row">
               <span>Import backup</span>
@@ -182,6 +205,6 @@
       </article>
     </template>
 
-    <script src="app.js?v=36" defer></script>
+    <script src="app.js?v=37" defer></script>
   </body>
 </html>
